@@ -10,7 +10,9 @@ const { Middleware } = require("../middleware/auth");
 const deviceDetector = new DeviceDetector();
 
 const route = Router();
-
+totp.options = {
+  step: 300
+}
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -48,26 +50,26 @@ async function SendMail(email, otp) {
  * @swagger
  * /auth/send-otp:
  *   post:
- *     description: Send OTP to user's email
- *     parameters:
- *       - name: email
- *         in: body
- *         required: true
- *         description: User's email address
- *         schema:
- *           type: object
- *           properties:
- *             email:
- *               type: string
- *               description: User's email address
+ *     summary: Отправить OTP на email пользователя
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 description: Электронная почта пользователя
  *     responses:
  *       200:
- *         description: OTP successfully sent to email
+ *         description: OTP успешно отправлен на email
  *       404:
- *         description: User with this email not found
+ *         description: Пользователь с таким email не найден
  *       500:
- *         description: Internal server error
+ *         description: Внутренняя ошибка сервера
  */
+
 route.post("/send-otp", async (req, res) => {
   try {
     let { email } = req.body;
@@ -79,46 +81,46 @@ route.post("/send-otp", async (req, res) => {
     }
     let otp = totp.generate(email + "soz");
     await SendMail(email, otp);
-    res.json({ message: `OTP sent to ${email}!` });
+    res.json({ message: `OTP sent to ${email}! ${otp}` });
   } catch (error) {
     res.status(500).json({ message: error.message });
     console.log(error.message);
   }
 });
-
+/**
 /**
  * @swagger
  * /auth/register:
  *   post:
- *     description: Register a new user
- *     parameters:
- *       - name: name
- *         in: body
- *         required: true
- *         description: User's name
- *         schema:
- *           type: object
- *           properties:
- *             name:
- *               type: string
- *               description: User's full name
- *             email:
- *               type: string
- *               description: User's email address
- *             password:
- *               type: string
- *               description: User's password
- *             role:
- *               type: string
- *               description: User's role (optional)
+ *     summary: Регистрация нового пользователя
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Имя пользователя
+ *               email:
+ *                 type: string
+ *                 description: Электронная почта
+ *               password:
+ *                 type: string
+ *                 description: Пароль
+ *               role:
+ *                 type: string
+ *                 description: Роль (необязательно)
  *     responses:
  *       201:
- *         description: User successfully created
+ *         description: Пользователь успешно создан
  *       400:
- *         description: Invalid data or user already exists
+ *         description: Неверные данные или пользователь уже существует
  *       500:
- *         description: Internal server error
+ *         description: Внутренняя ошибка сервера
  */
+
 route.post("/register", async (req, res) => {
   try {
     let { name, email, password, role } = req.body;
@@ -151,7 +153,7 @@ route.post("/register", async (req, res) => {
     });
 
     res.status(201).json({
-      message: `User created successfully`,
+      message: `User created successfully ${otp}`,
       user: { name: newUser.name, email: newUser.email, role: newUser.role },
     });
   } catch (error) {
@@ -164,29 +166,30 @@ route.post("/register", async (req, res) => {
  * @swagger
  * /auth/verify:
  *   post:
- *     description: Verify user's OTP code
- *     parameters:
- *       - name: email
- *         in: body
- *         required: true
- *         description: User's email address
- *         schema:
- *           type: object
- *           properties:
- *             email:
- *               type: string
- *               description: User's email address
- *             otp:
- *               type: string
- *               description: OTP code sent to user's email
+ *     summary: Подтверждение кода OTP
+ *     description: Проверка OTP-кода, отправленного на почту пользователя
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 description: Электронная почта пользователя
+ *               otp:
+ *                 type: string
+ *                 description: OTP-код, отправленный на почту
  *     responses:
  *       200:
- *         description: User successfully verified
+ *         description: Пользователь успешно подтверждён
  *       400:
- *         description: Invalid OTP or user not found
+ *         description: Неверный OTP или пользователь не найден
  *       500:
- *         description: Internal server error
+ *         description: Внутренняя ошибка сервера
  */
+
 route.post("/verify", async (req, res) => {
   try {
     const { email, otp } = req.body;
@@ -292,35 +295,31 @@ route.get("/my-sessions", Middleware, async (req, res) => {
  * @swagger
  * /auth/login:
  *   post:
- *     description: User login
- *     parameters:
- *       - name: email
- *         in: body
- *         required: true
- *         description: User's email address
- *         schema:
- *           type: object
- *           properties:
- *             email:
- *               type: string
- *               description: User's email address
- *             password:
- *               type: string
- *               description: User's password
+ *     summary: Авторизация пользователя
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: test@example.com
+ *               password:
+ *                 type: string
+ *                 example: 123456
  *     responses:
  *       200:
- *         description: Successfully logged in with tokens
+ *         description: Успешная авторизация
  *       400:
- *         description: Invalid email or password
- *       401:
- *         description: User is not verified
- *       500:
- *         description: Internal server error
+ *         description: Ошибка валидации
  */
 route.post("/login", async (req, res) => {
   try {
     const ip = req.ip;
     const { email, password } = req.body;
+    
 
     const user = await client.user.findUnique({ where: { email } });
     if (!user) {

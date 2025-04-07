@@ -8,26 +8,23 @@ const prdRoute = require("./routes/product");
 
 const app = express();
 
-// Middleware
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 
-// Настройка multer для загрузки файлов
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "uploads/"); // Папка для сохранения файлов
+    cb(null, "uploads/"); 
   },
   filename: function (req, file, cb) {
-    cb(null, Date.now() + "-" + file.originalname); // Имя файла будет включать текущую метку времени
+    cb(null, Date.now() + "-" + file.originalname); 
   },
 });
 
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // Ограничение размера файла — 10MB
+  limits: { fileSize: 10 * 1024 * 1024 }, 
 });
 
-// Swagger настройки
 const swaggerOptions = {
   swaggerDefinition: {
     openapi: "3.0.0",
@@ -38,7 +35,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: "http://localhost:3000", // Или ваш серверный URL, если развернуто на продакшене
+        url: "http://localhost:3000", 
       },
     ],
     components: {
@@ -50,14 +47,13 @@ const swaggerOptions = {
         },
       },
     },
-    security: [{ BearerAuth: [] }], // Обязательная аутентификация для всех маршрутов
+    security: [{ BearerAuth: [] }],
   },
-  apis: ["./index.js", "./routes/*.js"], // Путь к файлам с роутами
+  apis: ["./index.js", "./routes/*.js"], 
 };
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 
-// Роуты для загрузки файлов
 /**
  * @swagger
  * /upload:
@@ -117,12 +113,10 @@ app.post("/get-url", (req, res) => {
   res.json({ url: `http://localhost:3000/uploads/${file}` });
 });
 
-// Подключение роутов
 app.use("/auth", AuthRoute);
 app.use("/categories", categoryhRoute);
 app.use("/resurses", prdRoute);
 
-// Подключение Swagger UI для документации API
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 app.listen(3000, () => {

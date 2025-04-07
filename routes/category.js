@@ -9,34 +9,40 @@ const route = Router();
  * @swagger
  * /categories:
  *   get:
- *     description: Get a list of categories with pagination and search
+ *     summary: Получить список категорий с пагинацией и поиском
+ *     description: Возвращает список категорий с возможностью пагинации, сортировки и поиска.
  *     parameters:
  *       - name: limit
  *         in: query
- *         description: Number of categories per page
+ *         description: Количество категорий на странице
  *         required: false
- *         type: integer
+ *         schema:
+ *           type: integer
  *       - name: page
  *         in: query
- *         description: Page number to retrieve
+ *         description: Номер страницы
  *         required: false
- *         type: integer
+ *         schema:
+ *           type: integer
  *       - name: search
  *         in: query
- *         description: Search term to filter categories by name
+ *         description: Поисковый запрос для фильтрации по названию
  *         required: false
- *         type: string
+ *         schema:
+ *           type: string
  *       - name: sort
  *         in: query
- *         description: Sort order for category names ("asc" or "desc")
+ *         description: Порядок сортировки названий категорий ("asc" или "desc")
  *         required: false
- *         type: string
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
- *         description: List of categories
+ *         description: Список категорий
  *       500:
- *         description: Internal server error
+ *         description: Внутренняя ошибка сервера
  */
+
 route.get("/", async (req, res) => {
   try {
     let limit = Number(req.query.limit) || 10;
@@ -73,21 +79,24 @@ route.get("/", async (req, res) => {
  * @swagger
  * /categories/{id}:
  *   get:
- *     description: Get a specific category by ID
+ *     summary: Получить категорию по ID
+ *     description: Возвращает данные конкретной категории по её ID.
  *     parameters:
  *       - name: id
  *         in: path
- *         description: Category ID
+ *         description: ID категории
  *         required: true
- *         type: string
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
- *         description: The category details
+ *         description: Детали категории
  *       404:
- *         description: Category not found
+ *         description: Категория не найдена
  *       500:
- *         description: Internal server error
+ *         description: Внутренняя ошибка сервера
  */
+
 route.get("/:id", async (req, res) => {
   try {
     const category = await client.category.findUnique({
@@ -112,32 +121,33 @@ const categoryPostSchema = Joi.object({
  * @swagger
  * /categories:
  *   post:
- *     description: Create a new category
- *     parameters:
- *       - name: name
- *         in: body
- *         description: Category name
- *         required: true
- *         schema:
- *           type: object
- *           properties:
- *             name:
- *               type: string
- *               description: The name of the category
- *               example: "Electronics"
+ *     summary: Создать новую категорию
+ *     description: Создаёт новую категорию с указанным именем.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Название категории
+ *                 example: "Электроника"
  *     responses:
  *       200:
- *         description: Category successfully created
+ *         description: Категория успешно создана
  *       400:
- *         description: Category already exists or validation error
+ *         description: Категория уже существует или ошибка валидации
  *       500:
- *         description: Internal server error
+ *         description: Внутренняя ошибка сервера
  */
+
 route.post("/", Middleware, RoleMiddleware(["admin"]), async (req, res) => {
   try {
     const { name } = req.body;
 
-    if (await client.category.findUnique({ where: { name } })) {
+    if (await client.category.findFirst({ where: { name } })) {
       return res.status(400).json({ message: "Category already exists" });
     }
 
@@ -157,38 +167,40 @@ route.post("/", Middleware, RoleMiddleware(["admin"]), async (req, res) => {
 const categoryPatchSchema = Joi.object({
   name: Joi.string().min(2).max(55).optional(),
 });
-
 /**
  * @swagger
  * /categories/{id}:
  *   patch:
- *     description: Update a category by ID
+ *     summary: Обновить категорию по ID
+ *     description: Обновляет категорию по ID с новым именем.
  *     parameters:
  *       - name: id
  *         in: path
- *         description: Category ID
+ *         description: ID категории
  *         required: true
  *         type: string
- *       - name: name
- *         in: body
- *         description: New name of the category
- *         required: false
- *         schema:
- *           type: object
- *           properties:
- *             name:
- *               type: string
- *               description: The new name of the category
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Новое имя категории
+ *                 example: "Техника"
  *     responses:
  *       200:
- *         description: Category updated
+ *         description: Категория успешно обновлена
  *       400:
- *         description: Validation error
+ *         description: Ошибка валидации
  *       404:
- *         description: Category not found
+ *         description: Категория не найдена
  *       500:
- *         description: Internal server error
+ *         description: Внутренняя ошибка сервера
  */
+
 route.patch(
   "/:id",
   Middleware,
@@ -223,21 +235,24 @@ route.patch(
  * @swagger
  * /categories/{id}:
  *   delete:
- *     description: Delete a category by ID
+ *     summary: Удалить категорию по ID
+ *     description: Удаляет категорию по указанному ID.
  *     parameters:
  *       - name: id
  *         in: path
- *         description: Category ID
+ *         description: ID категории
  *         required: true
- *         type: string
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
- *         description: Category successfully deleted
+ *         description: Категория успешно удалена
  *       404:
- *         description: Category not found
+ *         description: Категория не найдена
  *       500:
- *         description: Internal server error
+ *         description: Внутренняя ошибка сервера
  */
+
 route.delete(
   "/:id",
   Middleware,

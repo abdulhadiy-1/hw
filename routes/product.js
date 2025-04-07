@@ -61,10 +61,10 @@ route.get("/", async (req, res) => {
     });
 
     res.json({ resurses });
-    logger.info("All resources retrieved");
+    console.log("All resources retrieved");
   } catch (error) {
     res.status(500).json({ message: error.message });
-    logger.error(error.message);
+    console.log(error.message);
   }
 });
 
@@ -95,10 +95,10 @@ route.get("/:id", async (req, res) => {
     if (!resurs) return res.status(404).json({ message: "Resource not found" });
 
     res.json(resurs);
-    logger.info("Resource retrieved by ID");
+    console.log("Resource retrieved by ID");
   } catch (error) {
     res.status(500).json({ message: error.message });
-    logger.error(error.message);
+    console.log(error.message);
   }
 });
 
@@ -113,26 +113,25 @@ const resursPostSchema = Joi.object({
  * /resurses:
  *   post:
  *     description: Create a new resource
- *     parameters:
- *       - name: name
- *         in: body
- *         description: Resource name
- *         required: true
- *         schema:
- *           type: object
- *           properties:
- *             name:
- *               type: string
- *               description: The name of the resource
- *               example: "Product A"
- *             price:
- *               type: number
- *               description: The price of the resource
- *               example: 100
- *             categoryId:
- *               type: number
- *               description: The ID of the category to which the resource belongs
- *               example: 1
+ *     requestBody:
+ *      required: true
+ *      content:
+ *        application/json:
+ *          schema:
+ *            type: object
+ *            properties:
+ *              name:
+ *                type: string
+ *                description: The name of the resource
+ *                example: "Product A"
+ *              price:
+ *                type: number
+ *                description: The price of the resource
+ *                example: 100.99
+ *              categoryId:
+ *                type: number
+ *                description: The ID of the category to which the resource belongs
+ *                example: 1
  *     responses:
  *       201:
  *         description: Resource successfully created
@@ -141,6 +140,7 @@ const resursPostSchema = Joi.object({
  *       500:
  *         description: Internal server error
  */
+
 route.post("/", Middleware, async (req, res) => {
   try {
     if (!req.user || !req.user.id) {
@@ -152,7 +152,6 @@ route.post("/", Middleware, async (req, res) => {
       return res.status(400).json({ message: error.details[0].message });
     }
 
-    const userId = req.user.id;
     const { categoryId, name, price } = req.body;
 
     const category = await client.category.findUnique({ where: { id: categoryId } });
@@ -160,12 +159,12 @@ route.post("/", Middleware, async (req, res) => {
       return res.status(400).json({ message: "Category not found" });
     }
 
-    const newResurs = await client.product.create({ data: { name, price, categoryId, userId } });
+    const newResurs = await client.product.create({ data: { name, price, categoryId } });
 
     res.status(201).json(newResurs);
-    logger.info("Resource created successfully");
+    console.log("Resource created successfully");
   } catch (error) {
-    logger.error(error);
+    console.log(error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
@@ -196,6 +195,7 @@ const resursPatchSchema = Joi.object({
  *             name:
  *               type: string
  *               description: The new name of the resource
+ *               example: "Updated Product"
  *       - name: price
  *         in: body
  *         description: New price of the resource
@@ -206,9 +206,10 @@ const resursPatchSchema = Joi.object({
  *             price:
  *               type: number
  *               description: The new price of the resource
+ *               example: 150.99
  *     responses:
  *       200:
- *         description: Resource updated
+ *         description: Resource successfully updated
  *       400:
  *         description: Validation error
  *       404:
@@ -216,6 +217,7 @@ const resursPatchSchema = Joi.object({
  *       500:
  *         description: Internal server error
  */
+
 route.patch("/:id", Middleware, async (req, res) => {
   try {
     if (!req.user) return res.status(401).json({ message: "Unauthorized" });
@@ -236,10 +238,10 @@ route.patch("/:id", Middleware, async (req, res) => {
     });
     res.json(updatedResurs);
 
-    logger.info("Resource updated");
+    console.log("Resource updated");
   } catch (error) {
     res.status(500).json({ message: error.message });
-    logger.error(error.message);
+    console.log(error.message);
   }
 });
 
@@ -278,10 +280,10 @@ route.delete("/:id", Middleware, async (req, res) => {
     });
 
     res.json({ message: "Resource deleted" });
-    logger.info("Resource deleted");
+    console.log("Resource deleted");
   } catch (error) {
     res.status(500).json({ message: error.message });
-    logger.error(error.message);
+    console.log(error.message);
   }
 });
 
